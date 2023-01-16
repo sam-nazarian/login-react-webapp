@@ -1,63 +1,74 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect, useReducer } from 'react';
 
 import Card from '../UI/Card/Card';
 import classes from './Login.module.css';
 import Button from '../UI/Button/Button';
 
+// outside of componenet func, doesn't use data in component func
+
+/**
+ * Triggered automatically once an action is dispatched
+ * @param {*} state is the latest state snapshot
+ * @param {*} action is the value passed into the dispatchEmail function
+ * @returns the new, updated state
+ */
+const emailReducer = (state, action) => {
+  if (action.type === 'USER_INPUT') {
+    return { value: action.val, isValid: action.val.includes('@') }; //updates emailState value & isValid
+  }
+  if (action.type === 'INPUT_BLUR') {
+    return { value: state.value, isValid: state.isValid };
+  }
+  return { value: '', isValid: false };
+};
+
 const Login = (props) => {
-  const [enteredEmail, setEnteredEmail] = useState('');
-  const [emailIsValid, setEmailIsValid] = useState(); //if invalid highlight red color when blurred
-
+  // const [enteredEmail, setEnteredEmail] = useState('');
+  // const [emailIsValid, setEmailIsValid] = useState();
   const [enteredPassword, setEnteredPassword] = useState('');
-  const [passwordIsValid, setPasswordIsValid] = useState(); //if invalid highlight red color when blurred
+  const [passwordIsValid, setPasswordIsValid] = useState();
+  const [formIsValid, setFormIsValid] = useState(false);
 
-  const [formIsValid, setFormIsValid] = useState(false); //valid if email has @ & password is longer than 6 char
+  const [emailState, dispatchEmail] = useReducer(emailReducer, { value: '', isValid: false });
 
-  // runs after every componenet render cycle, & the first time component mounts / initially created
+  useEffect(() => {
+    console.log('EFFECT RUNNING');
+
+    return () => {
+      console.log('EFFECT CLEANUP');
+    };
+  }, []);
+
   // useEffect(() => {
-  // console.log('EFFECT RUNNING!!!');
-  // });
-
-  // runs at beginning of render cycle
-  // console.log('EFFECT RUNNING!!!');
-
-  // useEffect(() => {
-  //   console.log('HELLO EFFECT!!!');
+  //   const identifier = setTimeout(() => {
+  //     console.log('Checking form validity!');
+  //     setFormIsValid(
+  //       enteredEmail.includes('@') && enteredPassword.trim().length > 6
+  //     );
+  //   }, 500);
 
   //   return () => {
-  //     console.log('BYE EFFECT!!!');
+  //     console.log('CLEANUP');
+  //     clearTimeout(identifier);
   //   };
-  // }, []);
-
-  // side effect of user entering data, an action that should be executed in reponse to another action (which is a side effect)
-  useEffect(() => {
-    // debouncing - debounce the user input, don't do something on every key stroke
-    const identifier = setTimeout(() => {
-      console.log('Checking form validity!');
-      setFormIsValid(enteredEmail.includes('@') && enteredPassword.trim().length > 6);
-    }, 500);
-
-    // clean up func doesn't happen on start but everytime useEffect is used after that it is ran
-    // reset previous timeout, (runs before timeout to clean it up before function runs)
-    // clear last timer before we creating a new one
-    return () => {
-      console.log('CLEANUP!!!!!');
-      clearTimeout(identifier); //stops the timeout from happening if another input is entered
-    };
-  }, [enteredEmail, enteredPassword]); //add the values that you're using as dependencies
+  // }, [enteredEmail, enteredPassword]);
 
   const emailChangeHandler = (event) => {
-    setEnteredEmail(event.target.value);
-    // setFormIsValid(event.target.value.includes('@') && enteredPassword.trim().length > 6);
+    // setEnteredEmail(event.target.value);
+    dispatchEmail({ type: 'USER_INPUT', val: event.target.value }); //val is also called payload
+
+    setFormIsValid(emailState.isValid && enteredPassword.trim().length > 6);
   };
 
   const passwordChangeHandler = (event) => {
     setEnteredPassword(event.target.value);
-    // setFormIsValid(event.target.value.trim().length > 6 && enteredEmail.includes('@'));
+
+    setFormIsValid(emailState.isValid && event.target.value.trim().length > 6);
   };
 
   const validateEmailHandler = () => {
-    setEmailIsValid(enteredEmail.includes('@'));
+    // setEmailIsValid(emailState.isValid);
+    dispatchEmail({ type: 'INPUT_BLUR' });
   };
 
   const validatePasswordHandler = () => {
@@ -66,20 +77,20 @@ const Login = (props) => {
 
   const submitHandler = (event) => {
     event.preventDefault();
-    props.onLogin(enteredEmail, enteredPassword);
+    props.onLogin(emailState.value, enteredPassword);
   };
 
   return (
     <Card className={classes.login}>
       <form onSubmit={submitHandler}>
-        <div className={`${classes.control} ${emailIsValid === false ? classes.invalid : ''}`}>
+        <div className={`${classes.control} ${emailState.isValid === false ? classes.invalid : ''}`}>
           <label htmlFor="email">E-Mail</label>
-          <input type="email" id="email" autoComplete="off" value={enteredEmail} onChange={emailChangeHandler} onBlur={validateEmailHandler} />
+          <input type="email" id="email" value={emailState.value} onChange={emailChangeHandler} onBlur={validateEmailHandler} />
         </div>
 
         <div className={`${classes.control} ${passwordIsValid === false ? classes.invalid : ''}`}>
           <label htmlFor="password">Password</label>
-          <input type="password" id="password" autoComplete="off" value={enteredPassword} onChange={passwordChangeHandler} onBlur={validatePasswordHandler} />
+          <input type="password" id="password" value={enteredPassword} onChange={passwordChangeHandler} onBlur={validatePasswordHandler} />
         </div>
 
         <div className={classes.actions}>
