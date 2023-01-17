@@ -36,14 +36,16 @@ function App() {
 
   return (
     // Provider is a componenet wrapped around other componenets
-    // all descendents will have access to that context
+    // all descendents will have access to that context, more consise/clean than having props being passed on that are not directly being used, instead being forwarded to other comopnents
     <AuthContext.Provider
       value={{
         isLoggedIn: isLoggedIn, //setting the value of the context
+        onLogout: logoutHandler, //passing function to toher components
       }}
     >
-      <MainHeader onLogout={logoutHandler} />
+      <MainHeader />
       <main>
+        {/* directly using the props on the components, not passing/fowarding it on to another component */}
         {!isLoggedIn && <Login onLogin={loginHandler} />}
         {isLoggedIn && <Home onLogout={logoutHandler} />}
       </main>
